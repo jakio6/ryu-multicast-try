@@ -3,6 +3,7 @@
 from mininet.cli import CLI
 from mininet.net import Mininet
 from mininet.node import RemoteController
+from mininet.node import Controller
 from mininet.topo import Topo
 from mininet.topolib import TreeTopo
 from mininet.topolib import TorusTopo
@@ -13,10 +14,12 @@ from json import dump
 
 def main():
     t = TorusTopo(3,3)
+    # t = TreeTopo(3,3)
     prot="OpenFlow13"
-    net = Mininet(controller=RemoteController)
+    net = Mininet()
+    # net = Mininet(controller=RemoteController)
+    c0 = net.addController('c0', controller=RemoteController, ip='192.168.31.158', port=6653)
     net.buildFromTopo(t)
-    #  c0 = net.addController('c0', ip='127.0.0.1', port=6633)
 
     topo = {}
     for link in t.links():
@@ -43,14 +46,16 @@ def main():
     for hn in hosts:
         ho = net.get(hn)
         make_igmp_host(ho, hn)
-    for sn in switches:
-        net.get(sn).cmd('ovs-vsctl set bridge '+sn+'protocols=OpenFlow13')
 
     with open('topo.json', 'w') as f:
         dump(topo, f)
 
     net.build()
     net.start()
+
+    for sn in switches:
+        net.get(sn).cmd('ovs-vsctl set bridge '+sn+' protocols=OpenFlow13')
+
     CLI(net)
     net.stop()
 
